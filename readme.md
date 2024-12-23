@@ -10,21 +10,21 @@ Bu script, Squid Proxy sunucusunu otomatik olarak kurar ve yapılandırır. Aşa
 
 1. **Script'i indirin:**
 
-   ```bash
-   wget -O setup_script.sh https://raw.githubusercontent.com/voltYazilim/otomatik_ipv4_proxy_olusturucu/refs/heads/main/index
-   ```
+    ```bash
+    wget -O setup_script.sh https://raw.githubusercontent.com/voltYazilim/otomatik_ipv4_proxy_olusturucu/refs/heads/main/index
+    ```
 
 2. **Çalıştırma izni verin:**
 
-   ```bash
-   chmod +x setup_script.sh
-   ```
+    ```bash
+    chmod +x setup_script.sh
+    ```
 
 3. **Script'i çalıştırın:**
 
-   ```bash
-   ./setup_script.sh
-   ```
+    ```bash
+    ./setup_script.sh
+    ```
 
 ## Script'in Yaptıkları
 
@@ -42,8 +42,8 @@ Bu script, Squid Proxy sunucusunu otomatik olarak kurar ve yapılandırır. Aşa
 - Script çalıştırıldıktan sonra sunucunuz HTTPS Proxy olarak çalışmaya hazır olacaktır.
 - Kullanıcı bilgilerini değiştirmek isterseniz, aşağıdaki komutu kullanabilirsiniz:
 
-  ```bash
-  sudo htpasswd /etc/squid/passwd <yeni_kullanıcı_adı>
-  ```
+    ```bash
+    sudo htpasswd /etc/squid/passwd <yeni_kullanıcı_adı>
+    ```
 
 Herhangi bir sorunla karşılaşırsanız, [GitHub Issues](https://github.com/voltYazilim/otomatik_ipv4_proxy_olusturucu/issues) kısmından destek alabilirsiniz.
