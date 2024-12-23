@@ -15,6 +15,14 @@ function check_error {
   fi
 }
 
+# Script'in birden fazla kez çalıştırılmasını engelleme
+if [ -f /tmp/script_already_run ]; then
+  echo -e "${RED}Bu script daha önce çalıştırıldı.${NC}"
+  exit 1
+fi
+
+touch /tmp/script_already_run
+
 # 1. Script'i GitHub'dan İndirme
 echo -e "${GREEN}1. Kurulum scripti GitHub'dan indiriliyor...${NC}"
 wget -O setup_script.sh https://raw.githubusercontent.com/voltYazilim/otomatik_ipv4_proxy_olusturucu/refs/heads/main/index
