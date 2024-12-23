@@ -15,60 +15,16 @@ function check_error {
   fi
 }
 
-# 1. Squid Proxy'i Yükleme
-echo -e "${GREEN}1. Squid Proxy'i Yükleniyor...${NC}"
-sudo apt update && sudo apt install squid apache2-utils -y
-check_error "Squid veya Apache2-utils yüklenirken bir sorun oluştu."
+# 1. Script'i GitHub'dan İndirme
+echo -e "${GREEN}1. Kurulum scripti GitHub'dan indiriliyor...${NC}"
+wget -O setup_script.sh https://raw.githubusercontent.com/voltYazilim/otomatik_ipv4_proxy_olusturucu/refs/heads/main/index
+check_error "Script GitHub'dan indirilemedi."
 
-# 2. Squid Konfigürasyon Dosyasını Yedekleme
-echo -e "${GREEN}2. Mevcut Squid konfigürasyonu yedekleniyor...${NC}"
-sudo cp /etc/squid/squid.conf /etc/squid/squid.conf.bak
-check_error "Squid konfigürasyon dosyası yedeklenemedi."
-
-# 3. Squid'i HTTPS Proxy olarak Ayarlama
-echo -e "${GREEN}3. Squid konfigürasyonu düzenleniyor...${NC}"
-CONFIG_FILE="/etc/squid/squid.conf"
-sudo bash -c "cat > $CONFIG_FILE" <<EOL
-http_port 3128
-
-acl SSL_ports port 443
-acl Safe_ports port 80
-acl Safe_ports port 443
-acl CONNECT method CONNECT
-
-http_access allow CONNECT
-
-auth_param basic program /usr/lib/squid/basic_ncsa_auth /etc/squid/passwd
-auth_param basic children 5
-auth_param basic realm Proxy Authentication Required
-auth_param basic credentialsttl 2 hours
-auth_param basic casesensitive on
-
-acl authenticated proxy_auth REQUIRED
-http_access allow authenticated
-EOL
-check_error "Squid konfigürasyon dosyası düzenlenemedi."
-
-# Kullanıcı Adı ve Şifre Dosyası Oluşturma
-echo -e "${GREEN}4. Kullanıcı dosyası oluşturuluyor...${NC}"
-sudo touch /etc/squid/passwd
-sudo chown proxy:proxy /etc/squid/passwd
-check_error "Kullanıcı dosyası oluşturulamadı."
-
-# Kullanıcı Ekleme
-echo -e "${GREEN}5. Kullanıcı ekleniyor...${NC}"
-sudo htpasswd -b /etc/squid/passwd volt master34
-check_error "Kullanıcı eklenirken bir sorun oluştu."
-
-# 4. Squid Hizmetini Yeniden Başlatma
-echo -e "${GREEN}6. Squid yeniden başlatılıyor...${NC}"
-sudo systemctl restart squid
-check_error "Squid hizmeti yeniden başlatılamadı."
-
-# 5. Firewall Ayarlarını Kontrol Etme
-echo -e "${GREEN}7. Firewall ayarları kontrol ediliyor...${NC}"
-sudo ufw allow 3128/tcp
-check_error "Firewall ayarı yapılamadı."
+# 2. İndirilen Script'i Çalıştırma
+echo -e "${GREEN}2. Script çalıştırılıyor...${NC}"
+chmod +x setup_script.sh
+./setup_script.sh
+check_error "Kurulum scripti çalıştırılırken bir sorun oluştu."
 
 # Kurulum Tamamlandı
 echo -e "${GREEN}Kurulum tamamlandı! Sunucunuz şimdi HTTPS Proxy olarak çalışıyor.${NC}"
