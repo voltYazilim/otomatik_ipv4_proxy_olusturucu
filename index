@@ -30,6 +30,13 @@ check_error "Script GitHub'dan indirilemedi."
 
 # 2. İndirilen Script'i Çalıştırma
 echo -e "${GREEN}2. Script çalıştırılıyor...${NC}"
+
+# Kendini çağırma döngüsünü engellemek için kontrol
+if [ "$(basename "$0")" == "setup_script.sh" ]; then
+  echo -e "${RED}setup_script.sh kendini çağırıyor, işlem durduruldu.${NC}"
+  exit 1
+fi
+
 chmod +x setup_script.sh
 ./setup_script.sh
 check_error "Kurulum scripti çalıştırılırken bir sorun oluştu."
