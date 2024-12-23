@@ -1,45 +1,72 @@
 #!/bin/bash
 
-# Squid Proxy Kurulumu Scripti
+# Squid Proxy Kurulum ve Yapılandırma Scripti
+# Kullanıcı adı: volt, Şifre: master
 
-# Renkler
+# Renkli çıktı için bazı değişkenler tanımlıyoruz.
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# Hata Kontrolü
-function check_error {
-  if [ $? -ne 0 ]; then
-    echo -e "${RED}Hata: $1${NC}"
+# Süper kullanıcı yetkisi kontrolü
+if [[ $EUID -ne 0 ]]; then
+    echo -e "${RED}Bu scripti çalıştırmak için root yetkilerine sahip olmalısınız.${NC}"
     exit 1
-  fi
-}
-
-# Script'in birden fazla kez çalıştırılmasını engelleme
-if [ -f /tmp/script_already_run ]; then
-  echo -e "${RED}Bu script daha önce çalıştırıldı.${NC}"
-  exit 1
 fi
 
-touch /tmp/script_already_run
+# 1. Squid Proxy'yi Yükleme
+echo -e "${GREEN}1. Squid Proxy kuruluyor...${NC}"
+sudo apt update
+sudo apt install squid apache2-utils -y
 
-# 1. Script'i GitHub'dan İndirme
-echo -e "${GREEN}1. Kurulum scripti GitHub'dan indiriliyor...${NC}"
-wget -O setup_script.sh https://raw.githubusercontent.com/voltYazilim/otomatik_ipv4_proxy_olusturucu/refs/heads/main/index
-check_error "Script GitHub'dan indirilemedi."
+# 2. Squid Konfigürasyon Dosyasını Yedekleme
+echo -e "${GREEN}2. Squid konfigürasyon dosyası yedekleniyor...${NC}"
+sudo cp /etc/squid/squid.conf /etc/squid/squid.conf.bak
 
-# 2. İndirilen Script'i Çalıştırma
-echo -e "${GREEN}2. Script çalıştırılıyor...${NC}"
+# 3. Squid'i HTTPS Proxy olarak Ayarlama
+echo -e "${GREEN}3. Squid ayarları düzenleniyor...${NC}"
+cat <<EOL | sudo tee /etc/squid/squid.conf
+http_port 3128
 
-# Kendini çağırma döngüsünü engellemek için kontrol
-if [ "$(basename "$0")" == "setup_script.sh" ]; then
-  echo -e "${RED}setup_script.sh kendini çağırıyor, işlem durduruldu.${NC}"
-  exit 1
-fi
+acl SSL_ports port 443
+acl Safe_ports port 80
+acl Safe_ports port 443
+acl CONNECT method CONNECT
 
-chmod +x setup_script.sh
-./setup_script.sh
-check_error "Kurulum scripti çalıştırılırken bir sorun oluştu."
+http_access allow CONNECT
 
-# Kurulum Tamamlandı
-echo -e "${GREEN}Kurulum tamamlandı! Sunucunuz şimdi HTTPS Proxy olarak çalışıyor.${NC}"
+# Kullanıcı Adı ve Şifre ile Kimlik Doğrulama
+auth_param basic program /usr/lib/squid/basic_ncsa_auth /etc/squid/passwd
+auth_param basic children 5
+auth_param basic realm Proxy Authentication Required
+auth_param basic credentialsttl 2 hours
+auth_param basic casesensitive on
+
+acl authenticated proxy_auth REQUIRED
+http_access allow authenticated
+
+# Varsayılan erişimi reddet
+http_access deny all
+EOL
+
+# 4. Kullanıcı Adı ve Şifre Ekleme
+echo -e "${GREEN}4. Kullanıcı adı ve şifre oluşturuluyor...${NC}"
+sudo touch /etc/squid/passwd
+sudo chown proxy:proxy /etc/squid/passwd
+sudo htpasswd -b /etc/squid/passwd volt master
+
+# 5. Squid Hizmetini Yeniden Başlatma
+echo -e "${GREEN}5. Squid yeniden başlatılıyor...${NC}"
+sudo systemctl restart squid
+
+# 6. Firewall Ayarlarını Kontrol Etme
+echo -e "${GREEN}6. Firewall ayarları yapılıyor...${NC}"
+sudo ufw allow 3128/tcp
+
+# Kurulum tamamlandı
+echo -e "${GREEN}Kurulum tamamlandı. Squid Proxy çalışıyor.${NC}"
+echo -e "${GREEN}Proxy bilgileri:${NC}"
+echo -e "${GREEN}IP: Sunucu_IP_Adresiniz${NC}"
+echo -e "${GREEN}Port: 3128${NC}"
+echo -e "${GREEN}Kullanıcı adı: volt${NC}"
+echo -e "${GREEN}Şifre: master${NC}"
